@@ -1,20 +1,22 @@
 // #7
-function intReverse(int) {
+function reverse(int) {
     if (Math.abs(int) < 10) {
         return int
     }
     if (int < 0) {
-        return Number('-' + Number(('' + Math.abs(int)).split('').reverse().join('')))
+        let result = Number('-' + Number(('' + Math.abs(int)).split('').reverse().join('')))
+        return result >= -Math.pow(2,31)?result:0
     }
-    else if (int > 0) {
-        return Number(('' + Math.abs(int)).split('').reverse().join(''))
+    else if (int > 0) {        
+        let result = Number(('' + Math.abs(int)).split('').reverse().join(''))
+        return result <= Math.pow(2,31)-1?result:0
     }
 }
-intReverse(0) // 0
-intReverse(10) // 1
-intReverse(-21) // -12
-intReverse(700) // 7
-intReverse(-980) // -89
+reverse(0) // 0
+reverse(10) // 1
+reverse(-21) // -12
+reverse(700) // 7
+reverse(-980) // -89
 
 
 
@@ -38,7 +40,7 @@ romanToInt('XLII') // 42
 
 
 // #12
-function toRoman(int) {
+function intToRoman(int) {
     const romanValues = [
         { value: 1000, numeral: 'M' },
         { value: 900, numeral: 'CM' },
@@ -64,8 +66,8 @@ function toRoman(int) {
     return roman;
 }
 
-toRoman(9) // 'IX'
-toRoman(42) // 'XLII'
+intToRoman(9) // 'IX'
+intToRoman(42) // 'XLII'
 
 
 
@@ -73,20 +75,22 @@ toRoman(42) // 'XLII'
 
 
 // #48
-function matrixRotate(matrix) {
-    let rotated = []
-    let inner = []
-    for (let j = 0; j < matrix[0].length; ++j) {
-        for (let i = matrix.length - 1; i >= 0; --i) {
-            inner.push(matrix[i][j])
+function rotate(matrix) {
+    const n = matrix.length;
+
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            [matrix[i][j], matrix[j][i]] = [matrix[j][i], matrix[i][j]];
         }
-        rotated.push(inner)
-        inner = []
     }
-    return rotated
+
+    for (let i = 0; i < n; i++) {
+        matrix[i].reverse();
+    }
 }
-matrixRotate([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) // [[7,4,1],[8,5,2],[9,6,3]]
-matrixRotate([[5, 1, 9, 11], [2, 4, 8, 10], [13, 3, 6, 7], [15, 14, 12, 16]]) // [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+
+rotate([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) // [[7,4,1],[8,5,2],[9,6,3]]
+rotate([[5, 1, 9, 11], [2, 4, 8, 10], [13, 3, 6, 7], [15, 14, 12, 16]]) // [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
 
 
 
@@ -95,16 +99,20 @@ matrixRotate([[5, 1, 9, 11], [2, 4, 8, 10], [13, 3, 6, 7], [15, 14, 12, 16]]) //
 
 // #55
 function canJump(nums) {
-    let cursor = 0
-    let hasPassed = false
-    while (!hasPassed) {
-        if (nums[cursor] == 0) return hasPassed
-        cursor = cursor + nums[cursor]
-        if (cursor >= nums.length - 1) {
-            hasPassed = true
-            return hasPassed
+    let cursor = 0;
+    let maxReach = 0;
+    let hasPassed = false;
+
+    while (cursor <= maxReach) {
+        maxReach = Math.max(maxReach, cursor + nums[cursor]);
+        if (maxReach >= nums.length - 1) {
+            hasPassed = true;
+            return hasPassed;
         }
+        cursor++;
     }
+
+    return hasPassed;
 }
 canJump([2, 3, 1, 1, 4]) // true
 canJump([3, 2, 1, 0, 4]) // false
@@ -146,14 +154,28 @@ addBinary('1101', '1011') // '11000'
 
 
 // #88
-function mergeSort(nums1, m, nums2, n) {
-    nums1 = nums1.splice(0, m)
-    nums2 = nums2.splice(0, n)
-    nums1 = nums1.concat(nums2)
-    nums1.sort((a, b) => a - b)
-    return nums1
+function merge(nums1, m, nums2, n) {
+    let p1 = m - 1
+    let p2 = n - 1
+    let p = m + n - 1
+    while (p1 >= 0 && p2 >= 0) {
+        if (nums1[p1] > nums2[p2]) {
+            nums1[p] = nums1[p1];
+            p1--;
+        } else {
+            nums1[p] = nums2[p2];
+            p2--;
+        }
+        p--;
+    }
+    while (p2 >= 0) {
+        nums1[p] = nums2[p2];
+        p2--;
+        p--;
+    }
 }
-mergeSort([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3) // [1,2,2,3,5,6]
+
+merge([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3) // [1,2,2,3,5,6]
 
 
 
@@ -162,22 +184,26 @@ mergeSort([1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3) // [1,2,2,3,5,6]
 
 // #443
 function compress(chars) {
-    let map = {}
-    for (let i = 0; i < chars.length; ++i) {
-        if (!(`${chars[i]}` in map)) {
-            map[`${chars[i]}`] = 1
-        } else {
-            map[`${chars[i]}`]++
+    let write = 0
+    let read = 0
+    while (read < chars.length) {
+        let char = chars[read];
+        let count = 0;
+        while (read < chars.length && chars[read] === char) {
+            read++;
+            count++;
+        }
+        chars[write] = char;
+        write++;
+        if (count > 1) {
+            for (let c of String(count)) {
+                chars[write] = c;
+                write++;
+            }
         }
     }
-    chars = []
-    for (let key in map) {
-        chars.push(key)
-        if (map[key] !== 1) {
-            chars.push(...map[key] + '')
-        }
-    }
-    return chars
+    chars.length = write;
+    return write;
 }
 compress(["a", "a", "b", "b", "c", "c", "c"]) // ['a', '2', 'b', '2', 'c', '3']
 compress(["a", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b"]) // ['a', 'b', '1', '2']
